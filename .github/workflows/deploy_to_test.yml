@@ -11,13 +11,13 @@ on:
   workflow_dispatch:
 
 env:
-  RESOURCE_GROUP: conductor-test
-  CONTAINER_GROUP: conductorregistry123
+  RESOURCE_GROUP_NAME: ${{ vars.RESOURCE_GROUP_NAME }}
   WORKER_ENVIRONMENT_VARIABLES: ${{ secrets.WORKER_ENVIRONMENT_VARIABLES }}
   REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
   REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
   REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
   AZURE_LOCATION: ${{secrets.AZURE_LOCATION}}
+  WORKER_SECURE_ENVIRONMENT_VARIABLES: ${{ secrets.WORKER_SECURE_ENVIRONMENT_VARIABLES }}
 
 jobs:
   run-ui-tests:
@@ -64,18 +64,18 @@ jobs:
           username: ${{ env.REGISTRY_USERNAME }}
           password: ${{ env.REGISTRY_PASSWORD }}
       - run: |
-          docker build -f docker/server/Dockerfile -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/conductor:${{ github.sha }} .
-          docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/conductor:${{ github.sha }}
+          docker build -f docker/server/Dockerfile -t ${{ env.REGISTRY_LOGIN_SERVER }}/conductor:${{ github.sha }} .
+          docker push ${{ env.REGISTRY_LOGIN_SERVER }}/conductor:${{ github.sha }}
 
       - name: Deploy Conductor Worker to Azure Container Instance
         uses: Azure/aci-deploy@v1
         with:
-          resource-group: ${{ env.RESOURCE_GROUP }}
-          image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/conductor:${{ github.sha }}
+          resource-group: ${{ env.RESOURCE_GROUP_NAME }}
+          image: ${{ env.REGISTRY_LOGIN_SERVER }}/conductor:${{ github.sha }}
           name: "conductorfromci"
-          dns-name-label: ${{ env.RESOURCE_GROUP }}${{ github.run_number }}
+          dns-name-label: ${{ env.RESOURCE_GROUP_NAME }}${{ github.run_number }}
           environment-variables: ${{ env.WORKER_ENVIRONMENT_VARIABLES }}
-          secure-environment-variables: ${{ secrets.WORKER_SECURE_ENVIRONMENT_VARIABLES }}
+          secure-environment-variables: ${{ env.WORKER_SECURE_ENVIRONMENT_VARIABLES }}
           location: "west us"
           registry-login-server: ${{ env.REGISTRY_LOGIN_SERVER }}
           registry-username: ${{ env.REGISTRY_USERNAME }}
