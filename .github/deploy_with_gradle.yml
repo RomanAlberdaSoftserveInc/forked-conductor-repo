@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: Gradle CI
 
 on:
   push:
@@ -41,10 +41,22 @@ jobs:
           username: ${{ env.CONTAINER_REGISTRY_USERNAME }}
           password: ${{ env.CONTAINER_REGISTRY_PASSWORD }}
 
-      - name: Run Docker Build & Push
-        run: |
-          docker build -f docker/server/Dockerfile -t ${{ env.CONTAINER_REGISTRY }}/conductor:${{ github.sha }} .
-          docker push ${{ env.CONTAINER_REGISTRY }}/conductor:${{ github.sha }}
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: ubuntu
+          java-version: 11
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Execute Gradle build
+        run: ./gradlew build
+
+      # - name: Run Docker Build & Push
+      #   run: |
+      #     docker build -f docker/server/Dockerfile -t ${{ env.CONTAINER_REGISTRY }}/conductor:${{ github.sha }} .
+      #     docker push ${{ env.CONTAINER_REGISTRY }}/conductor:${{ github.sha }}
 
       - name: Deploy Conductor Worker to Azure Container Instance
         uses: Azure/aci-deploy@v1
